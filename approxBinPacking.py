@@ -6,14 +6,24 @@ taskSet = [
     (0.4, 20)
 ]
 
+# Helper function to sum the utilization associated with 
+# each processor
+# TODO make more efficient by not needing to sum every time
+# DP with a per-processor current utilization value
 def getProcessorUtilization(processorTasks):
     return sum(task[0] for task in processorTasks)
 
-# For now just FFD, extend this with other approximate bin packing
+# For now just FFD, extend this with other approximate bin packing heuristics
 def main():
-    global taskSet
+    global taskSet # TODO change this so that we can add a larger number of tests
+    
+    # m: the maximum number of processors allowed
     numProcessors = 3
+
+    # A list of lists that tracks the tasks (tuples) assigned to each processor
     processors = []
+
+    # The index of the most recently opened processor bin
     currentProcessor = 0
 
     # Sort to be in non-increasing order
@@ -21,6 +31,7 @@ def main():
     taskSet.sort(reverse=True)
 
     for task in taskSet:
+        # If there is at least one task, open the first bin
         if len(processors) == 0:
             processors.append([])
         
@@ -31,7 +42,9 @@ def main():
                 assigned = True
                 break
         
-        # not enough space in existing bins!
+        # If a task is not assigned that means there is
+        # not enough space in existing bins! Open a new
+        # bin if possible under constraints
         if not assigned:
             if len(processors) < numProcessors - 1:
                 processors.append([])
