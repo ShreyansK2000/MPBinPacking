@@ -3,34 +3,28 @@ from gurobipy import GRB
 import numpy as np
 import scipy.sparse as sp
 
-taskSet = [
-    0.1, 
-    0.2,
-    0.5,
-    0.65,
-    0.4,
-]
 
-def main():
-    global taskSet
 
+def ilp_pack(taskSet, processorUB):
+    
     n = len(taskSet)
-    m = 3 # num processors or bins
+    m = processorUB # num processors or bins
 
     # matrix of decision variables x_ij
     DecisionVariableMatrixShape = (n,m)
     # = np.zeros(shape)
 
     model = gp.Model()
+    model.Params.LogToConsole = 0
 
     TaskSetUtilizationsVector = np.asarray(taskSet)
 
-    TaskUsedConstraintVector = np.ones(m, dtype=np.int)
-    TaskUsedResultVector = np.ones(n, dtype=np.int)
+    # TaskUsedConstraintVector = np.ones(m, dtype=np.int)
+    # TaskUsedResultVector = np.ones(n, dtype=np.int)
 
-    print("Utilization Vector: ", TaskSetUtilizationsVector)
-    print("Task Used Constraint Vector: ", TaskUsedConstraintVector)
-    print("Task Used Result Vector: ", TaskUsedResultVector)
+    # print("Utilization Vector: ", TaskSetUtilizationsVector)
+    # print("Task Used Constraint Vector: ", TaskUsedConstraintVector)
+    # print("Task Used Result Vector: ", TaskUsedResultVector)
 
     DecisionVariableMatrix = model.addMVar(DecisionVariableMatrixShape, vtype=GRB.BINARY)
     ProcessorsUsedVector = model.addMVar(m, vtype=GRB.BINARY)   
@@ -47,12 +41,25 @@ def main():
     # This constraint checks that each task is used exactly once in the assignment
     model.addConstrs(sum(DecisionVariableMatrix[i, :]) == 1 for i in range(n))
 
-    model.addConstrs(sum(DecisionVariableMatrix[i, j] * TaskSetUtilizationsVector[i] for i in range(n)) <= ProcessorsUsedVector[j] for j in range(m))
+    model.addConstrs(sum([DecisionVariableMatrix[i, j] * TaskSetUtilizationsVector[i] for i in range(n)]) <= ProcessorsUsedVector[j] for j in range(m))
 
     model.optimize()
 
-    print("number of bins: ", model.ObjVal)
-
+    try:
+        # print("number of bins: ", model.ObjVal)
+        return model.ObjVal
+    except:
+        print("No solution found!")
+        return -1
 
 if __name__ == "__main__":
-    main()
+    taskSet = [
+        0.1, 
+        0.2,
+        0.5,
+        0.65,
+        0.4,
+        0.9, 
+        # 0.9
+    ]
+    ilp_pack(taskSet, len(taskSet))
